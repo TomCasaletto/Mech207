@@ -6,6 +6,7 @@
 volatile bool gameLevelToggle = false;
 int gameLevelTogglePin = 19;
 int timeRemaining = 60; // Read this from other board
+bool useOtherBoard = true;
 
 const int numRooms = 5; // Make room 0 be 'pre-coin drop' and room 4 the 'finish line'
 bool roomCompleted[numRooms] = {0,0,0,0,0};
@@ -177,7 +178,17 @@ void receiveEvent(int howMany)
   strcat(buffer, num);
   timeRemaining = x;
   Serial.println(x);
-  
+  if (useOtherBoard && timeRemaining==0) {
+    currentRoom=1;
+    timeRemaining = 60;
+    // Flash lights to indicate end of game
+    for (int i=0;i<5; i++) {
+       setHighAll(5);
+       delay(100);
+       setLowAll(5);
+       delay(100);
+    }
+  }  
   Serial.println(buffer);
 }
 
