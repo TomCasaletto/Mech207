@@ -10,7 +10,7 @@ bool useOtherBoard = true;
 
 const int numRooms = 5; // Make room 0 be 'pre-coin drop' and room 4 the 'finish line'
 bool roomCompleted[numRooms] = {0,0,0,0,0};
-int currentRoom = 2;
+int currentRoom = 1;
 bool timedOut = false;
 unsigned long gameStartTime = 0;
 unsigned long timeOutSec = 40;
@@ -93,7 +93,6 @@ void setup() {
    setLowAll(2);
    setLowAll(3);
 
-   //attachInterrupt(digitalPinToInterrupt(gameLevelTogglePin), changeGameLevel, CHANGE);
    attachInterrupt(digitalPinToInterrupt(gameLevelTogglePin), changeGameLevel, RISING); //LOW< CHANGE, RISING, FALLING
 }
 
@@ -160,8 +159,8 @@ void changeGameLevel() {
 void setLevelSettings() {
    Serial.println("-----reset game level numbers--------");
    if (gameLevel==HIGH) {
-      memoryFlashTimeSec = 0.5;
-      memoryWaitTimeSec = 5;
+      memoryFlashTimeSec = 0.25;
+      memoryWaitTimeSec = 2;
    } else {
       memoryFlashTimeSec = 1.0;
       memoryWaitTimeSec = 7;
@@ -177,6 +176,7 @@ void receiveEvent(int howMany)
   itoa(x, num, 10);
   strcat(buffer, num);
   timeRemaining = x;
+
   Serial.println(x);
   if (useOtherBoard && timeRemaining==0) {
     currentRoom=1;
@@ -188,7 +188,8 @@ void receiveEvent(int howMany)
        setLowAll(5);
        delay(100);
     }
-  }  
+  }
+
   Serial.println(buffer);
 }
 
@@ -274,53 +275,37 @@ void setLowAll(int room)
 void doRoom2() {
    
    while (!roomCompleted[2]) {
-      //if (Serial.available() > 0) { // Check if there's incoming serial data
-      //   int receivedValue = Serial.parseInt(); // Read the integer value from the serial buffer
-      //   Serial.print("Received: ");
-      //   Serial.println(receivedValue); // Print the received value to the serial monitor
-      //} else {
-      //   Serial.println("no data to receive");
-      //}
-
-      // TBD: for testing, go to Room 3 after 3 loops
-      //if (roomTwoLoopIdx++ >=2) {
-      //   roomCompleted[2] = true;
-      //   currentRoom=3;
-      //   return;
-      //}
 
       unsigned long currentTime = millis();
       float duration = (currentTime-gameStartTime)/1000;
-      if (duration > timeOutSec) {
-         timedOut = true;
-         break;
-      }
+      //if (duration > timeOutSec) {
+      //   timedOut = true;
+      //   break;
+      //}
       setLowAll(2);
 
-      if (roomTwoLoopIdx++ > 1) {
-         // Check answer
-         bool foundAnswer = true;
-         answerIdx = 0;
-         for (int i=0;i<5; i++) {
-             if (userInput5[i] != roomTwoAnswer[i]) {
-                Serial.println("-----Wrong answer ROOM 2, at position--------");
-                Serial.println("Time elapsed:");
-                Serial.println(duration);
-                foundAnswer=false;
-                break;
-             }
-         }
-
-         if (foundAnswer) {
-            Serial.println("-----WINNER ROOM 2!!!--------");
-            roomCompleted[2] = true;
-            currentRoom = 3;
-            flashLed(led5, 250, 5);
+      // Check answer
+      bool foundAnswer = true;
+      answerIdx = 0;
+      for (int i=0;i<5; i++) {
+         if (userInput5[i] != roomTwoAnswer[i]) {
+            Serial.println("-----Wrong answer ROOM 2, at position--------");
+            Serial.println("Time elapsed:");
+            Serial.println(duration);
+            foundAnswer=false;
             break;
-         } else {
-            Serial.println("-----still waiting ROOM 2!!!--------");
-            flashLed(led1, 250,5 );
          }
+      }
+
+      if (foundAnswer) {
+         Serial.println("-----WINNER ROOM 2!!!--------");
+         roomCompleted[2] = true;
+         currentRoom = 3;
+         flashLed(led5, 250, 5);
+         break;
+      } else {
+         Serial.println("-----still waiting ROOM 2!!!--------");
+         flashLed(led1, 250,5 );
       }
 
       // Flash lights to indicate start of memory game
@@ -397,6 +382,45 @@ void printInput()
   Serial.println();
 }
 
+int getIrInput()
+{
+   uint32_t val = 0;
+   if (irrecv.decode()) { // have we received an IR signal?
+ 
+   last_decodedRawData = irrecv.decodedIRData.decodedRawData;
+   //map the IR code to the remote key
+   switch (last_decodedRawData)
+   {
+      case 0xBA45FF00: Serial.println("POWER"); resetInput(); break;
+      case 0xB847FF00: Serial.println("FUNC/STOP"); break;
+      case 0xB946FF00: Serial.println("VOL+"); break;
+      case 0xBB44FF00: Serial.println("FAST BACK");    break;
+      case 0xBF40FF00: Serial.println("PAUSE");    break;
+      case 0xBC43FF00: Serial.println("FAST FORWARD");   break;
+      case 0xF807FF00: Serial.println("DOWN");    break;
+      case 0xEA15FF00: Serial.println("VOL-");    break;
+      case 0xF609FF00: Serial.println("UP");    break;
+      case 0xE619FF00: Serial.println("EQ");    break;
+      case 0xF20DFF00: Serial.println("ST/REPT");    break;
+      case 0xE916FF00: Serial.println("0");    val=0; break;
+      case 0xF30CFF00: Serial.println("1");    val=1; break;
+      case 0xE718FF00: Serial.println("2");    val=2; break;
+      case 0xA15EFF00: Serial.println("3");    val=3; break;
+      case 0xF708FF00: Serial.println("4");    val=4; break;
+      case 0xE31CFF00: Serial.println("5");    val=5; break;
+      case 0xA55AFF00: Serial.println("6");    val=6; break;
+      case 0xBD42FF00: Serial.println("7");    val=7; break;
+      case 0xAD52FF00: Serial.println("8");    val=8; break;
+      case 0xB54AFF00: Serial.println("9");    val=9; break;
+      default:
+         Serial.println(" other button   ");
+   }
+   }
+   irrecv.resume();
+
+   return val;
+}
+
 void translateIR() // takes action based on IR code received
 {
   Serial.print("counter=");
@@ -462,6 +486,7 @@ void doRoom3()
 {
    Serial.println("In Room 3");
    setLowAll(3);
+
    // Flash lights to indicate start of stair game
    for (int i=0;i<5; i++) {
       setHighAll(3);
@@ -474,25 +499,32 @@ void doRoom3()
    int currentLedRoom3 = 3;
    int roomThreeLoopIdx = 1;
    Serial.println("Stepping to next stair...");
+   int numCorrect=0;
    while (!roomCompleted[3]) {
-      int simulateUserJoystickTime = random(3,7);
+      Serial.println("Room 3 LED:");
       Serial.println(currentLedRoom3);
-      //flashLed(roomThreeLeds[currentLedRoom3], 250, simulateUserJoystickTime);
       digitalWrite(roomThreeLeds[currentLedRoom3], HIGH);
-      delay(simulateUserJoystickTime*1000);
+
+      int guess = -1;
+      while (guess != currentLedRoom3) {
+         delay(1000);
+         guess = getIrInput();
+         Serial.println(guess);
+      }
+      if (++numCorrect == 3) {
+         roomCompleted[3] = true;
+      }
+      Serial.println("hooray 3");
       digitalWrite(roomThreeLeds[currentLedRoom3], LOW);
 
       // Create next stair to go to
       while (currentLedRoom3 == lastLedRoom3) {
-            currentLedRoom3 = random(1,6)-1;
+         delay(1000);
+         currentLedRoom3 = random(1,6)-1;
       }
       lastLedRoom3 = currentLedRoom3;
 
-      if (roomThreeLoopIdx++ > 3) {
-         break;
-      }
    }
-   roomCompleted[3] = true;
    currentRoom=4;
 
    // Flash lights to indicate end of stair game
@@ -517,9 +549,19 @@ void doRoom4()
    }
 
    for (int i=0;i<3; i++) {
-      digitalWrite(roomFourLeds[i], HIGH);
-      delay(1000);
-      digitalWrite(roomFourLeds[i], LOW);
+
+      // Choose random number to flash
+      int flashCount = random(2,8);
+      Serial.println("flashCount");
+      Serial.println(flashCount);
+
+      int guess = 1000;
+      while (guess != flashCount) {
+         flashLed(roomFourLeds[i], 250, flashCount);
+         delay(2000);
+         guess = getIrInput();
+      }
+      Serial.println("GOT ONE ROOM 4");
    }
 
    roomCompleted[4] = true;
