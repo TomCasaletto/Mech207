@@ -8,9 +8,10 @@ int gameLevelTogglePin = 19;
 int timeRemaining = 60; // Read this from other board
 bool useOtherBoard = true;
 
+// Global variables
 const int numRooms = 5; // Make room 0 be 'pre-coin drop' and room 4 the 'finish line'
 bool roomCompleted[numRooms] = {0,0,0,0,0};
-int currentRoom = 1;
+int currentRoom = 3;
 bool timedOut = false;
 unsigned long gameStartTime = 0;
 unsigned long timeOutSec = 40;
@@ -18,7 +19,6 @@ unsigned long timeOutSec = 40;
 int receiver = 48;           // Signal Pin of IR receiver to Arduino Digital Pin
 IRrecv irrecv(receiver);     // create instance of 'irrecv'
 uint32_t last_decodedRawData = 0;
-int buttonCount = 0;
 
 // Memory game paramters
 int led1 = 18;
@@ -75,7 +75,7 @@ void setup() {
    pinMode(gameLevelTogglePin, INPUT_PULLUP);
 
    Wire.begin(9);
-   Wire.onReceive(receiveEvent);
+   Wire.onReceive(receiveTimerEvent);
 
    irrecv.enableIRIn(); // Start the IR receiver
    randomSeed(analogRead(A0)); // Reading empty pin gives new seed every time
@@ -167,7 +167,7 @@ void setLevelSettings() {
    }
 }
 
-void receiveEvent(int howMany)      
+void receiveTimerEvent(int howMany)      
 {
   int x = Wire.read();
   char buffer[30];
@@ -278,10 +278,6 @@ void doRoom2() {
 
       unsigned long currentTime = millis();
       float duration = (currentTime-gameStartTime)/1000;
-      //if (duration > timeOutSec) {
-      //   timedOut = true;
-      //   break;
-      //}
       setLowAll(2);
 
       // Check answer
@@ -333,17 +329,12 @@ void doRoom2() {
 
       // Flash the correct pattern for the user
       for (int i=0; i<5; i++) {
-         //digitalWrite(roomTwoAnswer[i]+1, HIGH);
-         digitalWrite(ledPortMap[roomTwoAnswer[i]], HIGH);
-         //delay(1000);
+          digitalWrite(ledPortMap[roomTwoAnswer[i]], HIGH);
          delay(memoryFlashTimeSec*1000);
-         //digitalWrite(roomTwoAnswer[i]+1, LOW);
          digitalWrite(ledPortMap[roomTwoAnswer[i]], LOW);
-         //delay(1000);
       }
 
       // Now go into a loop for a certain time waiting for user input
-      //int waitTimeSec = 6;
       resetInput();
       Serial.println("Wait to enter answer: ");
       unsigned long startTime = millis();
@@ -353,9 +344,7 @@ void doRoom2() {
          //Serial.println(deltaTime);
 
          if (irrecv.decode()) { // have we received an IR signal?
-            Serial.println("loop begin...");
             translateIR();
-            //Serial.println("wait for the next input");
             irrecv.resume();
          }
       }
@@ -423,8 +412,6 @@ int getIrInput()
 
 void translateIR() // takes action based on IR code received
 {
-  Serial.print("counter=");
-  Serial.println(++buttonCount);
   // Check if it is a repeat IR code 
   //if (irrecv.decodedIRData.flags)
   //{
@@ -503,7 +490,7 @@ void doRoom3()
    while (!roomCompleted[3]) {
       Serial.println("Room 3 LED:");
       Serial.println(currentLedRoom3);
-      digitalWrite(roomThreeLeds[currentLedRoom3], HIGH);
+      digitalWrite(roomThreeLeds[currentLedRoom3-1], HIGH);
 
       int guess = -1;
       while (guess != currentLedRoom3) {
@@ -515,12 +502,12 @@ void doRoom3()
          roomCompleted[3] = true;
       }
       Serial.println("hooray 3");
-      digitalWrite(roomThreeLeds[currentLedRoom3], LOW);
+      digitalWrite(roomThreeLeds[currentLedRoom3-1], LOW);
 
       // Create next stair to go to
       while (currentLedRoom3 == lastLedRoom3) {
          delay(1000);
-         currentLedRoom3 = random(1,6)-1;
+         currentLedRoom3 = random(1,6);
       }
       lastLedRoom3 = currentLedRoom3;
 
@@ -548,10 +535,15 @@ void doRoom4()
       delay(100);
    }
 
+   // For each LED, flash number to decode (Q: one at a time?)
+   int lastLedCount = -1;
    for (int i=0;i<3; i++) {
 
       // Choose random number to flash
       int flashCount = random(2,8);
+      while (flashCount == lastLedCount) {
+         flashCount = random(2,8);
+      }
       Serial.println("flashCount");
       Serial.println(flashCount);
 
@@ -561,6 +553,7 @@ void doRoom4()
          delay(2000);
          guess = getIrInput();
       }
+      lastLedCount = flashCount;
       Serial.println("GOT ONE ROOM 4");
    }
 
