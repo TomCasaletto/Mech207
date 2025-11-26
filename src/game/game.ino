@@ -4,14 +4,14 @@
 
 // Interrupt variables
 volatile bool gameLevelToggle = false;
-int gameLevelTogglePin = 19;
+int gameLevelTogglePin = 2;
 int timeRemaining = 60; // Read this from other board
 bool useOtherBoard = true;
 
 // Global variables
 const int numRooms = 5; // Make room 0 be 'pre-coin drop' and room 4 the 'finish line'
 bool roomCompleted[numRooms] = {0,0,0,0,0};
-int currentRoom = 3;
+int currentRoom = 1;
 bool timedOut = false;
 unsigned long gameStartTime = 0;
 unsigned long timeOutSec = 40;
@@ -21,11 +21,11 @@ IRrecv irrecv(receiver);     // create instance of 'irrecv'
 uint32_t last_decodedRawData = 0;
 
 // Memory game paramters
-int led1 = 18;
-int led2 = 17;
-int led3 = 16;
-int led4 = 15;
-int led5 = 14;
+int led1 = 12;
+int led2 = 11;
+int led3 = 10;
+int led4 = 9;
+int led5 = 8;
 int ledPortMap[5]={led1, led2, led3, led4, led5};
 int gameLevel = LOW; // LOW=easy, HIGH=hard
 float memoryFlashTimeSec = 0.75;
@@ -297,11 +297,11 @@ void doRoom2() {
          Serial.println("-----WINNER ROOM 2!!!--------");
          roomCompleted[2] = true;
          currentRoom = 3;
-         flashLed(led5, 250, 5);
+         flashLed(led1, 250, 5);
          break;
       } else {
          Serial.println("-----still waiting ROOM 2!!!--------");
-         flashLed(led1, 250,5 );
+         flashLed(led5, 250,5 );
       }
 
       // Flash lights to indicate start of memory game
