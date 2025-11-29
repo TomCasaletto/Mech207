@@ -34,6 +34,9 @@ float memoryFlashTimeSec = 0.75;
 float memoryWaitTimeSec = 4;
 int roomTwoLoopIdx = 0;
 
+int buttonPinsMemoryGame[5] = {3,4,5,6,7};
+int lastFiveMemoryGame[5] = {0,0,0,0,0};
+
 // TBD: make these local variables?
 const int numColorsMemory = 5;
 int roomTwoAnswer[numColorsMemory] = {1,2,3,4,5};
@@ -58,6 +61,12 @@ float runeFlashTimeSec = 0.25;
 
 
 void setup() {
+   pinMode(buttonPinsMemoryGame[0], INPUT);
+   pinMode(buttonPinsMemoryGame[1], INPUT);
+   pinMode(buttonPinsMemoryGame[2], INPUT);
+   pinMode(buttonPinsMemoryGame[3], INPUT);
+   pinMode(buttonPinsMemoryGame[4], INPUT);
+
    pinMode(led1, OUTPUT);
    pinMode(led2, OUTPUT);
    pinMode(led3, OUTPUT);
@@ -282,6 +291,20 @@ void setLowAll(int room)
    }
 }
 
+void printLastFiveMemoryGame()
+{
+  char buffer[20];
+  strcpy(buffer, "Last five="); // Reset buffer to an empty string
+
+  for (int i=0; i<5; i++) {
+    char num[2];
+    itoa(lastFiveMemoryGame[i], num, 10);
+    strcat(buffer, num);
+    strcat(buffer, " ");
+   }
+   Serial.println(buffer);
+}
+
 void doRoom2() {
    
    while (!roomCompleted[2]) {
@@ -294,7 +317,9 @@ void doRoom2() {
       bool foundAnswer = true;
       answerIdx = 0;
       for (int i=0;i<5; i++) {
-         if (userInput5[i] != roomTwoAnswer[i]) {
+         // NOTE: when switched from IR input to buttons, had to reverse order of comparison? Fix later.
+         //if (userInput5[i] != roomTwoAnswer[i]) {
+         if (lastFiveMemoryGame[4-i] != roomTwoAnswer[i]) {
             Serial.println("-----Wrong answer ROOM 2, at position--------");
             Serial.println("Time elapsed:");
             Serial.println(duration);
@@ -344,6 +369,32 @@ void doRoom2() {
          digitalWrite(roomTwoLeds[roomTwoAnswer[i]], LOW);
       }
 
+      Serial.println("Loop for user to enter answer: ");
+      unsigned long startTime = millis();
+      long deltaTime = millis() - startTime;
+      while (deltaTime < memoryWaitTimeSec*1000) {
+         deltaTime = millis() - startTime;
+
+         for (int i=0; i<5; i++) {
+            int value = digitalRead(buttonPinsMemoryGame[i]);
+            delay(10);
+            if(value == HIGH) {
+               for (int j=4; j>0; j--) {
+                  lastFiveMemoryGame[j] = lastFiveMemoryGame[j-1];
+               }
+               lastFiveMemoryGame[0]=i;
+
+               Serial.println("-----BUTTON PRESSED--------");
+               Serial.println(i);
+               printLastFiveMemoryGame();
+
+               delay(500);
+            }
+         }
+      }
+
+// IR input section
+/*
       // Now go into a loop for a certain time waiting for user input
       resetInput();
       Serial.println("Wait to enter answer: ");
@@ -360,6 +411,7 @@ void doRoom2() {
       }
       Serial.println("User input: ");
       printInput();
+*/
    }
 }
 
