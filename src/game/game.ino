@@ -16,6 +16,7 @@ bool timedOut = false;
 unsigned long gameStartTime = 0;
 unsigned long timeOutSec = 40;
 
+// IR receiver variables (used for testing)
 int receiver = 48;           // Signal Pin of IR receiver to Arduino Digital Pin
 IRrecv irrecv(receiver);     // create instance of 'irrecv'
 uint32_t last_decodedRawData = 0;
@@ -32,6 +33,7 @@ float memoryFlashTimeSec = 0.75;
 float memoryWaitTimeSec = 4;
 int roomTwoLoopIdx = 0;
 
+// TBD: make these local variables?
 const int numColorsMemory = 5;
 int roomTwoAnswer[numColorsMemory] = {1,2,3,4,5};
 uint32_t userInput5[numColorsMemory] = {0,0,0,0,0};
@@ -486,6 +488,7 @@ int getMotorPos(int motorNum)
    int motorPos = -1;
    int loopNum = 1;
    // TBD: add timeout or max loops for this loop so we don't loop forever
+   // TBD: or...do this looping outside this function
    while (loopNum < 10) {
       // Send command to get motor position
       Serial1.println(motorNum);
@@ -497,8 +500,6 @@ int getMotorPos(int motorNum)
          Serial.println(motorPos);
          return motorPos;
       }
-      //delay(1000);
-      //return motorPos;
    }
 }
 
@@ -514,38 +515,7 @@ void doRoom3()
       setLowAll(3);
       delay(100);
    }
-/*
-while(1) {
-   while (Serial1.available()){
-      Serial.println("looping to read Serial1");
-      delay(1);
-      if(Serial1.available()>0){
-         char c = Serial1.read();
-         Serial.println(c);
-         if (isControl(c)){
-            Serial.println("is control");
-            break;
-         }
-      }
-   }
 
-   String readString;
-   while (Serial1.available()) {
-      delay(1);
-      if (Serial1.available() >0) {
-         char c = Serial1.read();  //gets one byte from serial buffer
-         if (isControl(c)) {
-            //'Serial.println("it's a control character");
-            break;
-         }
-         readString += c; //makes the string readString    
-      }
-   }
-   Serial.println("full comm:");
-   Serial.println(readString);
-   delay(1000);
-}
-*/
    int lastLedRoom3 = 3;
    int currentLedRoom3 = 3;
    int roomThreeLoopIdx = 1;
@@ -556,37 +526,26 @@ while(1) {
       Serial.println(currentLedRoom3);
       digitalWrite(roomThreeLeds[currentLedRoom3-1], HIGH);
 
-      // IR input version
-      //int guess = -1;
-      //while (guess != currentLedRoom3) {
-      //   delay(1000);
-      //   guess = getIrInput();
-      //   Serial.println(guess);
-      //}
-
       // Move to Room 2, current stair
       Serial.println(5);
       int motor1Pos = -1;
-      // Loop until motor 1 at proper position or we time out
+      // Loop until motor 1 at proper position or we time out (TBD)
       while (motor1Pos != currentLedRoom3) {
          motor1Pos = getMotorPos(1);
          delay(500);
-         //motor1Pos = motor1Pos;
       }
 
+      Serial.println("GOT A CORRECT ANSWER IN ROOM 3------------------------------------------");
       if (++numCorrect == 3) {
          roomCompleted[3] = true;
       }
-      Serial.println("hooray, got a stair in Room 3");
       digitalWrite(roomThreeLeds[currentLedRoom3-1], LOW);
 
       // Create next stair to go to
       while (currentLedRoom3 == lastLedRoom3) {
-         delay(1000);
          currentLedRoom3 = random(1,6);
       }
       lastLedRoom3 = currentLedRoom3;
-
    }
    currentRoom=4;
 
@@ -622,33 +581,21 @@ void doRoom4()
       }
       Serial.println("flashCount");
       Serial.println(flashCount);
+      flashLed(roomFourLeds[i], 250, flashCount);
 
-      int guess = 1000;
-      //while (guess != flashCount) {
-         flashLed(roomFourLeds[i], 250, flashCount);
-         //delay(2000);
-         //guess = getIrInput();
-
-         //Serial.println(5);
-         int motor2Pos = -1;
-         // Loop until motor 2 at proper position or we time out
-         while (motor2Pos != flashCount) {
-            motor2Pos = getMotorPos(2);
-            if (motor2Pos > 1999) {
-               motor2Pos = motor2Pos - 2000;
-            }
-            //motor2Pos = motor2Pos - 2000;  //TBD, fix this later
-            //motor2Pos = motor2Pos;  //TBD, fix this later
-            Serial.println("         in loop...motor2Pos=");
-            Serial.println(motor2Pos);
-            delay(1000);
+      int motor2Pos = -1;
+      // Loop until motor 2 at proper position or we time out
+      while (motor2Pos != flashCount) {
+         motor2Pos = getMotorPos(2);
+         if (motor2Pos > 1999) {
+            motor2Pos = motor2Pos - 2000;
          }
-
-
-
-      //}
+         Serial.println("         in loop...motor2Pos=");
+         Serial.println(motor2Pos);
+         delay(1000);
+      }
       lastLedCount = flashCount;
-      Serial.println("GOT ONE ROOM 4");
+      Serial.println("GOT A CORRECT ANSWER IN ROOM 4------------------------------------------");
    }
 
    roomCompleted[4] = true;
