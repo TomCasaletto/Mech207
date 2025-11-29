@@ -2,11 +2,12 @@
 #include "IRremote.h"
 #include "Wire.h"
 
+
 // Interrupt variables
 volatile bool gameLevelToggle = false;
 int gameLevelTogglePin = 2;
 int timeRemaining = 60; // Read this from other board
-bool useOtherBoard = true;
+bool useOtherBoard = true; // For timer testing (remove)
 
 // Global variables
 const int numRooms = 5; // Make room 0 be 'pre-coin drop' and room 4 the 'finish line'
@@ -21,13 +22,13 @@ int receiver = 48;           // Signal Pin of IR receiver to Arduino Digital Pin
 IRrecv irrecv(receiver);     // create instance of 'irrecv'
 uint32_t last_decodedRawData = 0;
 
-// Memory game paramters
+// Memory game parameters
 int led1 = 12;
 int led2 = 11;
 int led3 = 10;
 int led4 = 9;
 int led5 = 8;
-int ledPortMap[5]={led1, led2, led3, led4, led5};
+int roomTwoLeds[5] = {led1, led2, led3, led4, led5};
 int gameLevel = LOW; // LOW=easy, HIGH=hard
 float memoryFlashTimeSec = 0.75;
 float memoryWaitTimeSec = 4;
@@ -46,14 +47,13 @@ int led8 = 42;
 int led9 = 44;
 int led10 = 46;
 int roomThreeLeds[5] = {led6, led7, led8, led9, led10};
-float stairFlashTimeSec = 0.5;
 
 // Rune game parameters
 int led11 = 31;
 int led12 = 33;
 int led13 = 35;
 int roomFourLeds[3] = {led11, led12, led13};
-float runeFlashTimeSec = 0.5;
+float runeFlashTimeSec = 0.25;
 
 
 
@@ -97,7 +97,7 @@ void setup() {
    setLowAll(2);
    setLowAll(3);
 
-   attachInterrupt(digitalPinToInterrupt(gameLevelTogglePin), changeGameLevel, RISING); //LOW< CHANGE, RISING, FALLING
+   attachInterrupt(digitalPinToInterrupt(gameLevelTogglePin), changeGameLevel, RISING); //LOW, CHANGE, RISING, FALLING
 }
 
 void loop() {
@@ -143,7 +143,6 @@ void loop() {
          setLowAll(5);
          delay(100);
       }
-      currentRoom = 1;
 
       int finalCounter=1;
       while(1) {
@@ -171,7 +170,7 @@ void setLevelSettings() {
    Serial.println("-----reset game level numbers--------");
    if (gameLevel==HIGH) {
       memoryFlashTimeSec = 0.25;
-      memoryWaitTimeSec = 2;
+      memoryWaitTimeSec = 3;
    } else {
       memoryFlashTimeSec = 1.0;
       memoryWaitTimeSec = 7;
@@ -340,9 +339,9 @@ void doRoom2() {
 
       // Flash the correct pattern for the user
       for (int i=0; i<5; i++) {
-          digitalWrite(ledPortMap[roomTwoAnswer[i]], HIGH);
+         digitalWrite(roomTwoLeds[roomTwoAnswer[i]], HIGH);
          delay(memoryFlashTimeSec*1000);
-         digitalWrite(ledPortMap[roomTwoAnswer[i]], LOW);
+         digitalWrite(roomTwoLeds[roomTwoAnswer[i]], LOW);
       }
 
       // Now go into a loop for a certain time waiting for user input
@@ -581,7 +580,7 @@ void doRoom4()
       }
       Serial.println("flashCount");
       Serial.println(flashCount);
-      flashLed(roomFourLeds[i], 250, flashCount);
+      flashLed(roomFourLeds[i], 1000*runeFlashTimeSec, flashCount);
 
       int motor2Pos = -1;
       // Loop until motor 2 at proper position or we time out
