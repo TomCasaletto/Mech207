@@ -50,6 +50,7 @@ int led8 = 42;
 int led9 = 44;
 int led10 = 46;
 int roomThreeLeds[5] = {led6, led7, led8, led9, led10};
+int numStairsToJump = 3;
 
 // Rune game parameters
 int led11 = 31;
@@ -57,6 +58,7 @@ int led12 = 33;
 int led13 = 35;
 int roomFourLeds[3] = {led11, led12, led13};
 float runeFlashTimeSec = 0.25;
+int numRunesToDetect = 3;
 
 
 
@@ -180,9 +182,19 @@ void setLevelSettings() {
    if (gameLevel==HIGH) {
       memoryFlashTimeSec = 0.25;
       memoryWaitTimeSec = 3;
+
+      numStairsToJump = 5;
+
+      runeFlashTimeSec = 0.1;
+      numRunesToDetect = 3;
    } else {
       memoryFlashTimeSec = 1.0;
       memoryWaitTimeSec = 7;
+
+      numStairsToJump = 3;
+
+      runeFlashTimeSec = 0.25;
+      numRunesToDetect = 3;
    }
 }
 
@@ -197,7 +209,8 @@ void receiveTimerEvent(int howMany)
   timeRemaining = x;
 
   Serial.println(x);
-  if (useOtherBoard && timeRemaining==0) {
+  //if (useOtherBoard && timeRemaining==0) {
+  if (timeRemaining==-1) {
     currentRoom=1;
     timeRemaining = 60;
     // Flash lights to indicate end of game
@@ -384,8 +397,8 @@ void doRoom2() {
                }
                lastFiveMemoryGame[0]=i;
 
-               Serial.println("-----BUTTON PRESSED--------");
-               Serial.println(i);
+               //Serial.println("-----BUTTON PRESSED--------");
+               //Serial.println(i);
                printLastFiveMemoryGame();
 
                delay(500);
@@ -587,10 +600,11 @@ void doRoom3()
       }
 
       Serial.println("GOT A CORRECT ANSWER IN ROOM 3------------------------------------------");
-      if (++numCorrect == 3) {
+      if (++numCorrect >= numStairsToJump) {
          roomCompleted[3] = true;
       }
       digitalWrite(roomThreeLeds[currentLedRoom3-1], LOW);
+      Serial.println(numCorrect);
 
       // Create next stair to go to
       while (currentLedRoom3 == lastLedRoom3) {
