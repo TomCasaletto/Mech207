@@ -179,6 +179,10 @@ void coinDrop() {
       Serial.println("-----TOGGLE is high, setting game to RESET??--------");
    }
    currentRoom = 1;
+   for (int i=0; i<5; i++) {
+      roomCompleted[i] = false;
+   }
+
 }
 
 void changeGameLevel() {
@@ -244,6 +248,11 @@ void receiveTimerEvent(int howMany)
 void requestTimerEvent(int howMany)      
 {
    Serial.println("requestTimerEvent");
+   char buffer[2];
+   itoa(currentRoom, buffer, 10);
+
+   Wire.write(buffer); // Send a response to the master
+/*
    if (roomCompleted[2]) {
       Serial.println("sending WINNER");
       //Wire.write("WINNER"); // Send a response to the master
@@ -253,6 +262,7 @@ void requestTimerEvent(int howMany)
       //Wire.write("NOTWIN"); // Send a response to the master
       Wire.write("0"); // Send a response to the master
    }
+*/
 }
 
 void flashLed(int ledNumber, int delayMilliSec, int numTimes) {

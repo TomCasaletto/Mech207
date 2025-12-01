@@ -22,16 +22,27 @@ void setup() {
  }
 
 void loop() {
+   if (winner || timeRemaining == 0) {
+      writeNum(timeRemaining, 3000);
+      return;
+   }
+
+   delay(750);
    Serial.println(timeRemaining);
    Wire.beginTransmission(9);
    Wire.write(timeRemaining);
    Wire.endTransmission();
+/*
    if (winner) {
-      writeNum(timeRemaining, 1000);
-      delay(500);
-      return;
+      for (int i=0; i<5; i++) {
+         writeNum(timeRemaining, 1000);
+         delay(500);
+      }
+      winner = false;
+      timeRemaining = 30;
    }
-
+*/
+/*
    if (timeRemaining > 0) {
       writeNum(timeRemaining--, 3000);
       //delay(500);
@@ -47,7 +58,7 @@ void loop() {
       //writeNum(8888, 1000);
       //delay(500);
    }
-
+*/
    Serial.println("requesting data");
    Wire.requestFrom(9, 1); // Request 6 bytes from slave address 9
    while (Wire.available()) { // While data is available
@@ -56,9 +67,17 @@ void loop() {
    
       if (c == '0') {
          Serial.println("no winner yet");
-      } else if (c == '1') {
+         timeRemaining = 30;
+         writeNum(timeRemaining, 3000);
+         winner = false;
+      } else if (c == '1' ||  c == '2' || c == '3' || c == '4') {
+         // do nothing
+         writeNum(timeRemaining--, 3000);
+      } else if (c == '5') {
          Serial.println("winner");
          winner = true;
+      } else {
+         writeNum(timeRemaining, 3000);
       }
       break;
    }
