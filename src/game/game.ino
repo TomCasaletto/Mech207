@@ -93,6 +93,7 @@ void setup() {
 
    Wire.begin(9);
    Wire.onReceive(receiveTimerEvent);
+   Wire.onRequest(requestTimerEvent); // Register function to call on data request
 
    irrecv.enableIRIn(); // Start the IR receiver
    randomSeed(analogRead(A0)); // Reading empty pin gives new seed every time
@@ -239,6 +240,19 @@ void receiveTimerEvent(int howMany)
   }
 
   Serial.println(buffer);
+}
+void requestTimerEvent(int howMany)      
+{
+   Serial.println("requestTimerEvent");
+   if (roomCompleted[2]) {
+      Serial.println("sending WINNER");
+      //Wire.write("WINNER"); // Send a response to the master
+      Wire.write("1"); // Send a response to the master
+   } else {
+      Serial.println("not winner yet");
+      //Wire.write("NOTWIN"); // Send a response to the master
+      Wire.write("0"); // Send a response to the master
+   }
 }
 
 void flashLed(int ledNumber, int delayMilliSec, int numTimes) {

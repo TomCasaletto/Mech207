@@ -7,6 +7,7 @@
 
 int timeRemainingStart = 30;
 int timeRemaining = 30;
+bool winner = false;
 
 
 void setup() {
@@ -25,6 +26,11 @@ void loop() {
    Wire.beginTransmission(9);
    Wire.write(timeRemaining);
    Wire.endTransmission();
+   if (winner) {
+      writeNum(timeRemaining, 1000);
+      delay(500);
+      return;
+   }
 
    if (timeRemaining > 0) {
       writeNum(timeRemaining--, 3000);
@@ -41,4 +47,21 @@ void loop() {
       //writeNum(8888, 1000);
       //delay(500);
    }
+
+   Serial.println("requesting data");
+   Wire.requestFrom(9, 1); // Request 6 bytes from slave address 9
+   while (Wire.available()) { // While data is available
+      char c = Wire.read(); // Read a byte
+      Serial.print(c); // Print it to serial monitor
+   
+      if (c == '0') {
+         Serial.println("no winner yet");
+      } else if (c == '1') {
+         Serial.println("winner");
+         winner = true;
+      }
+      break;
+   }
+   Serial.println(); // New line after receiving data
+
 }
