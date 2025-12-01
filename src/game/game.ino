@@ -5,14 +5,14 @@
 
 // Interrupt variables
 volatile bool gameLevelToggle = false;
-int gameLevelTogglePin = 2;
+int gameLevelTogglePin = 1;
 int timeRemaining = 60; // Read this from other board
 bool useOtherBoard = true; // For timer testing (remove)
 
 // Global variables
 const int numRooms = 5; // Make room 0 be 'pre-coin drop' and room 4 the 'finish line'
 bool roomCompleted[numRooms] = {0,0,0,0,0};
-int currentRoom = 4;
+int currentRoom = 1;
 bool timedOut = false;
 unsigned long gameStartTime = 0;
 unsigned long timeOutSec = 40;
@@ -209,8 +209,9 @@ void receiveTimerEvent(int howMany)
   timeRemaining = x;
 
   Serial.println(x);
-  //if (useOtherBoard && timeRemaining==0) {
-  if (timeRemaining==-1) {
+  if (useOtherBoard && timeRemaining==0) {
+   Serial1.println(10); // Tell Motor Controller to go to Starting position (Zero pos)
+  //if (timeRemaining==-1) {
     currentRoom=1;
     timeRemaining = 60;
     // Flash lights to indicate end of game
@@ -319,6 +320,7 @@ void printLastFiveMemoryGame()
 }
 
 void doRoom2() {
+   Serial1.println(10); // Tell Motor Controller to go to Starting position (Zero pos)
    
    while (!roomCompleted[2]) {
 
@@ -582,6 +584,9 @@ int getMotorPos(int motorNum)
 void doRoom3()
 {
    Serial.println("In Room 3");
+   Serial1.println(11); // Tell Motor Controller to move player to Room 2, Stair 1
+   Serial1.println(3); // Tell Motor Controller to enter Up/Down joystick control
+
    setLowAll(3);
 
    // Flash lights to indicate start of stair game
@@ -598,18 +603,17 @@ void doRoom3()
    Serial.println("Stepping to next stair...");
    int numCorrect=0;
    while (!roomCompleted[3]) {
-      Serial.println("Room 3 LED:");
-      Serial.println(currentLedRoom3);
+      //Serial.println("Room 3 LED:");
+      //Serial.println(currentLedRoom3);
       digitalWrite(roomThreeLeds[currentLedRoom3-1], HIGH);
 
       // Move to Room 2, current stair
-      Serial.println(5);
-      int motor1Pos = -1;
+       int motor1Pos = -1;
       // Loop until motor 1 at proper position or we time out (TBD)
       while (motor1Pos != currentLedRoom3) {
-         motor1Pos = getMotorPos(0);
-         Serial.println("waiting for response");
-         delay(500);
+         motor1Pos = getMotorPos(1);
+         //Serial.println("waiting for response");
+         delay(100); // Do not send commands too quickly
       }
 
       Serial.println("GOT A CORRECT ANSWER IN ROOM 3------------------------------------------");
@@ -617,11 +621,11 @@ void doRoom3()
          roomCompleted[3] = true;
       }
       digitalWrite(roomThreeLeds[currentLedRoom3-1], LOW);
-      Serial.println(numCorrect);
+      //Serial.println(numCorrect);
 
       // Create next stair to go to
       while (currentLedRoom3 == lastLedRoom3) {
-         currentLedRoom3 = random(1,6);
+         currentLedRoom3 = random(1,5);
       }
       lastLedRoom3 = currentLedRoom3;
    }
@@ -639,7 +643,7 @@ void doRoom3()
 void doRoom4()
 {
    Serial.println("In Room 4");
-   Serial1.println(4); // Tell Motor Controller to enter joystick control
+   Serial1.println(4); // Tell Motor Controller to enter Left/Right joystick control
 
    setLowAll(4);
    // Flash lights to indicate start of rune game
