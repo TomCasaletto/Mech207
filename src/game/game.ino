@@ -3,16 +3,19 @@
 #include "Wire.h"
 
 
-// Interrupt variables
+// Interrupt variablesm (ONLY CERTAIN PINS CAN DO INTERRUPTS)
+//   UNO: 2, 3
+//  MEGA: 2, 3, 18, 19, 20, and 21.
 volatile bool gameLevelToggle = false;
-int gameLevelTogglePin = 1;
+int gameOnInterruptPin = 2; // ONLY CERTAIN PINS CAN DO INTERRUPTS
+int gameLevelToggleInterruptPin = 3;
 int timeRemaining = 60; // Read this from other board
 bool useOtherBoard = true; // For timer testing (remove)
 
 // Global variables
 const int numRooms = 5; // Make room 0 be 'pre-coin drop' and room 4 the 'finish line'
 bool roomCompleted[numRooms] = {0,0,0,0,0};
-int currentRoom = 1;
+int currentRoom = 0;
 bool timedOut = false;
 unsigned long gameStartTime = 0;
 unsigned long timeOutSec = 40;
@@ -23,18 +26,18 @@ IRrecv irrecv(receiver);     // create instance of 'irrecv'
 uint32_t last_decodedRawData = 0;
 
 // Memory game parameters
-int led1 = 12;
-int led2 = 11;
-int led3 = 10;
-int led4 = 9;
-int led5 = 8;
+int led1 = 13;
+int led2 = 12;
+int led3 = 11;
+int led4 = 10;
+int led5 = 9;
 int roomTwoLeds[5] = {led1, led2, led3, led4, led5};
 int gameLevel = LOW; // LOW=easy, HIGH=hard
 float memoryFlashTimeSec = 0.75;
 float memoryWaitTimeSec = 4;
 int roomTwoLoopIdx = 0;
 
-int buttonPinsMemoryGame[5] = {3,4,5,6,7};
+int buttonPinsMemoryGame[5] = {4,5,6,7,8};
 int lastFiveMemoryGame[5] = {0,0,0,0,0};
 
 // TBD: make these local variables?
@@ -85,7 +88,8 @@ void setup() {
    pinMode(led12, OUTPUT);
    pinMode(led13, OUTPUT);
 
-   pinMode(gameLevelTogglePin, INPUT_PULLUP);
+   pinMode(gameOnInterruptPin, INPUT_PULLUP);
+   pinMode(gameLevelToggleInterruptPin, INPUT_PULLUP);
 
    Wire.begin(9);
    Wire.onReceive(receiveTimerEvent);
@@ -108,7 +112,8 @@ void setup() {
    setLowAll(2);
    setLowAll(3);
 
-   attachInterrupt(digitalPinToInterrupt(gameLevelTogglePin), changeGameLevel, RISING); //LOW, CHANGE, RISING, FALLING
+   attachInterrupt(digitalPinToInterrupt(gameOnInterruptPin), coinDrop, RISING); //LOW, CHANGE, RISING, FALLING
+   attachInterrupt(digitalPinToInterrupt(gameLevelToggleInterruptPin), changeGameLevel, RISING); //LOW, CHANGE, RISING, FALLING
 }
 
 void loop() {
@@ -130,12 +135,13 @@ void loop() {
       currentRoom = 0;
    }
 
-   if (currentRoom==1) {
+   if (currentRoom==0) {
       // Check for coin in tight loop (assume this passes for now)
+      Serial.println("-----In room 0--------");
+   } else if (currentRoom==1) {
       Serial.println("-----In room 1--------");
       currentRoom = 2;
       gameStartTime = millis();
-
    } else if (currentRoom==2) {
       Serial.println("-----In room 2--------");
       doRoom2();
@@ -165,8 +171,17 @@ void loop() {
    delay(1000);
 }
 
+void coinDrop() {
+   if (digitalRead(gameOnInterruptPin)==LOW) {
+      Serial.println("-----TOGGLE is low,  setting game to ON??--------");
+   } else {
+      Serial.println("-----TOGGLE is high, setting game to RESET??--------");
+   }
+   currentRoom = 1;
+}
+
 void changeGameLevel() {
-   if (digitalRead(gameLevelTogglePin)==LOW) {
+   if (digitalRead(gameLevelToggleInterruptPin)==LOW) {
       Serial.println("-----TOGGLE is low,  setting gameLevel to EASY--------");
       gameLevel=LOW;
   } else {
