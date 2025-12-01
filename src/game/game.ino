@@ -12,7 +12,7 @@ bool useOtherBoard = true; // For timer testing (remove)
 // Global variables
 const int numRooms = 5; // Make room 0 be 'pre-coin drop' and room 4 the 'finish line'
 bool roomCompleted[numRooms] = {0,0,0,0,0};
-int currentRoom = 1;
+int currentRoom = 4;
 bool timedOut = false;
 unsigned long gameStartTime = 0;
 unsigned long timeOutSec = 40;
@@ -546,8 +546,8 @@ void translateIR() // takes action based on IR code received
 
 int getMotorPos(int motorNum)
 {
-   Serial.println("get pos for motor:");
-   Serial.println(motorNum);
+   //Serial.println("get pos for motor:");
+   //Serial.println(motorNum);
 
    int motorPos = -1;
    int loopNum = 1;
@@ -555,14 +555,26 @@ int getMotorPos(int motorNum)
    // TBD: or...do this looping outside this function
    while (loopNum < 10) {
       // Send command to get motor position
+      //Serial.println("sending...");
       Serial1.println(motorNum);
 
-      if (Serial1.available()) { // Check if data is available to read
+      if (Serial1.available() > 0) { // Check if data is available to read
          String receivedData = Serial1.readStringUntil('\n'); // Read until a newline character
-         motorPos = strtol(receivedData.c_str(), NULL, 10);
-         Serial.println("motor pos: ");
+         //motorPos = strtol(receivedData.c_str(), NULL, 10);
+         motorPos = receivedData.toInt();
+         //Serial.println("motor pos: ");
          Serial.println(motorPos);
+         //delay(1000);
+
+         // BUG FIX: apparently we need to keep reading until Serial1 is unavailable?
+         while(Serial1.available() > 0) {
+            Serial1.read();
+         }
+
          return motorPos;
+      } else {
+         //Serial.println("Serial1 unavailable");
+         delay(100);
       }
    }
 }
@@ -595,7 +607,8 @@ void doRoom3()
       int motor1Pos = -1;
       // Loop until motor 1 at proper position or we time out (TBD)
       while (motor1Pos != currentLedRoom3) {
-         motor1Pos = getMotorPos(1);
+         motor1Pos = getMotorPos(0);
+         Serial.println("waiting for response");
          delay(500);
       }
 
@@ -640,9 +653,9 @@ void doRoom4()
    for (int i=0;i<3; i++) {
 
       // Choose random number of times to flash
-      int flashCount = random(2,8);
+      int flashCount = random(1,4);
       while (flashCount == lastLedCount) {
-         flashCount = random(2,8);
+         flashCount = random(1,4);
       }
       Serial.println("flashCount");
       Serial.println(flashCount);
@@ -651,13 +664,14 @@ void doRoom4()
       int motor2Pos = -1;
       // Loop until motor 2 at proper position or we time out
       while (motor2Pos != flashCount) {
-         motor2Pos = getMotorPos(2);
-         if (motor2Pos > 1999) {
-            motor2Pos = motor2Pos - 2000;
-         }
-         Serial.println("         in loop...motor2Pos=");
-         Serial.println(motor2Pos);
-         delay(1000);
+         motor2Pos = getMotorPos(1);
+         //Serial.println("waiting...");
+         //if (motor2Pos > 1999) {
+         //   motor2Pos = motor2Pos - 2000;
+         //}
+         //Serial.println("         in loop...motor2Pos=");
+         //Serial.println(motor2Pos);
+         delay(100);
       }
       lastLedCount = flashCount;
       Serial.println("GOT A CORRECT ANSWER IN ROOM 4------------------------------------------");
