@@ -639,6 +639,8 @@ void doRoom3()
 void doRoom4()
 {
    Serial.println("In Room 4");
+   Serial1.println(4); // Tell Motor Controller to enter joystick control
+
    setLowAll(4);
    // Flash lights to indicate start of rune game
    for (int i=0;i<5; i++) {
@@ -664,14 +666,14 @@ void doRoom4()
       int motor2Pos = -1;
       // Loop until motor 2 at proper position or we time out
       while (motor2Pos != flashCount) {
-         motor2Pos = getMotorPos(1);
+         motor2Pos = getMotorPos(2);
          //Serial.println("waiting...");
          //if (motor2Pos > 1999) {
          //   motor2Pos = motor2Pos - 2000;
          //}
          //Serial.println("         in loop...motor2Pos=");
          //Serial.println(motor2Pos);
-         delay(100);
+         delay(100); // Do not send commands too quickly
       }
       lastLedCount = flashCount;
       Serial.println("GOT A CORRECT ANSWER IN ROOM 4------------------------------------------");
