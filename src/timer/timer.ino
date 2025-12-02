@@ -25,9 +25,15 @@ void setup() {
 
 void loop() {
    if (winner || timeRemaining == 0) {
-      writeNum(timeRemaining, 3000);
       Serial.println("resetting in 5 sec");
-      delay(5000);
+      // May only need this if not hooked up to motors
+      for (int i=0; i<10; i++) {
+         writeNum(timeRemaining, 3000);
+         Wire.beginTransmission(9);
+         Wire.write(timeRemaining);
+         Wire.endTransmission();
+         delay(500);
+      }
       resetFunc();
       
       //return;
