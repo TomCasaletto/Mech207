@@ -229,18 +229,11 @@ void receiveTimerEvent(int howMany)
   timeRemaining = x;
 
   Serial.println(x);
-  if (useOtherBoard && timeRemaining==0) {
+  if (timeRemaining <=0 ) {
+   Serial.println("TIME OUT");
+   timedOut = true;
    Serial1.println(10); // Tell Motor Controller to go to Starting position (Zero pos)
-  //if (timeRemaining==-1) {
-    currentRoom=1;
-    timeRemaining = 60;
-    // Flash lights to indicate end of game
-    for (int i=0;i<5; i++) {
-       setHighAll(5);
-       delay(100);
-       setLowAll(5);
-       delay(100);
-    }
+   currentRoom=0;
   }
 
   Serial.println(buffer);
@@ -252,17 +245,6 @@ void requestTimerEvent(int howMany)
    itoa(currentRoom, buffer, 10);
 
    Wire.write(buffer); // Send a response to the master
-/*
-   if (roomCompleted[2]) {
-      Serial.println("sending WINNER");
-      //Wire.write("WINNER"); // Send a response to the master
-      Wire.write("1"); // Send a response to the master
-   } else {
-      Serial.println("not winner yet");
-      //Wire.write("NOTWIN"); // Send a response to the master
-      Wire.write("0"); // Send a response to the master
-   }
-*/
 }
 
 void flashLed(int ledNumber, int delayMilliSec, int numTimes) {
@@ -387,6 +369,11 @@ void doRoom2() {
          roomCompleted[2] = true;
          currentRoom = 3;
          flashLed(led1, 250, 5);
+         break;
+      } else if (timedOut) {
+         Serial.println("-----TIMED OUT ROOM 2!!!--------");
+         currentRoom = 0;
+         flashLed(led5, 250, 5);
          break;
       } else {
          Serial.println("-----still waiting ROOM 2!!!--------");
@@ -642,7 +629,13 @@ void doRoom3()
    Serial.println("Stepping to next stair...");
    int numCorrect=0;
    while (!roomCompleted[3]) {
-      //Serial.println("Room 3 LED:");
+      if (timedOut) {
+         Serial.println("BREAKING OUT OF ROOM 3");
+         currentRoom = 0;
+         break;
+      }
+      Serial.println("Room 3 LED, timeRemaining:");
+      Serial.println(timeRemaining);
       //Serial.println(currentLedRoom3);
       digitalWrite(roomThreeLeds[currentLedRoom3-1], HIGH);
 
@@ -651,15 +644,23 @@ void doRoom3()
       // Loop until motor 1 at proper position or we time out (TBD)
       while (motor1Pos != currentLedRoom3) {
          motor1Pos = getMotorPos(1);
-         //Serial.println("waiting for response");
+         Serial.println("waiting for response");
          delay(100); // Do not send commands too quickly
-      }
 
-      Serial.println("GOT A CORRECT ANSWER IN ROOM 3------------------------------------------");
+         if (timedOut) {
+            Serial.println("BREAKING OUT OF ROOM 3");
+            currentRoom = 0;
+            break;
+         }
+
+      }
+      Serial.println("GOT A CORRECT ANSWER IN ROOM 3-------------FLASH FOR 2 SEC-----------------------------");
+      digitalWrite(roomThreeLeds[currentLedRoom3-1], LOW);
+      flashLed(roomThreeLeds[currentLedRoom3-1], 500, 4);
+
       if (++numCorrect >= numStairsToJump) {
          roomCompleted[3] = true;
       }
-      digitalWrite(roomThreeLeds[currentLedRoom3-1], LOW);
       //Serial.println(numCorrect);
 
       // Create next stair to go to
