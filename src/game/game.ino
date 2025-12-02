@@ -10,7 +10,6 @@ volatile bool gameLevelToggle = false;
 int gameOnInterruptPin = 2; // ONLY CERTAIN PINS CAN DO INTERRUPTS
 int gameLevelToggleInterruptPin = 3;
 int timeRemaining = 60; // Read this from other board
-bool useOtherBoard = true; // For timer testing (remove)
 
 // Global variables
 const int numRooms = 5; // Make room 0 be 'pre-coin drop' and room 4 the 'finish line'
@@ -200,13 +199,13 @@ void changeGameLevel() {
 void setLevelSettings() {
    Serial.println("-----reset game level numbers--------");
    if (gameLevel==HIGH) {
-      memoryFlashTimeSec = 0.25;
+      memoryFlashTimeSec = 0.5;
       memoryWaitTimeSec = 3;
 
-      numStairsToJump = 5;
+      numStairsToJump = 6;
 
       runeFlashTimeSec = 0.1;
-      numRunesToDetect = 3;
+      numRunesToDetect = 6;
    } else {
       memoryFlashTimeSec = 1.0;
       memoryWaitTimeSec = 7;
