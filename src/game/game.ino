@@ -2,6 +2,8 @@
 #include "IRremote.h"
 #include "Wire.h"
 
+void(* resetFunc) (void) = 0; // reset
+
 
 // Interrupt variablesm (ONLY CERTAIN PINS CAN DO INTERRUPTS)
 //   UNO: 2, 3
@@ -130,6 +132,10 @@ void loop() {
 
    if (timedOut) {
       Serial.println("-----Game loser TIMEOUT--------");
+      Serial.println("resetting in 5 sec");
+      delay(5000);
+      resetFunc(); // reset
+
       // Announce loser
       // Reset game to start
       currentRoom = 0;
@@ -402,11 +408,25 @@ void doRoom2() {
          Serial.println(roomTwoAnswer[i]);
       }
 
+      if (timedOut) {
+         Serial.println("-----TIMED OUT ROOM 2!!!--------");
+         currentRoom = 0;
+         flashLed(led5, 250, 5);
+         break;
+      }
+
       // Flash the correct pattern for the user
       for (int i=0; i<5; i++) {
          digitalWrite(roomTwoLeds[roomTwoAnswer[i]], HIGH);
          delay(memoryFlashTimeSec*1000);
          digitalWrite(roomTwoLeds[roomTwoAnswer[i]], LOW);
+      }
+
+      if (timedOut) {
+         Serial.println("-----TIMED OUT ROOM 2!!!--------");
+         currentRoom = 0;
+         flashLed(led5, 250, 5);
+         break;
       }
 
       Serial.println("Loop for user to enter answer: ");
@@ -697,6 +717,13 @@ void doRoom4()
    int lastLedCount = -1;
    for (int i=0;i<3; i++) {
 
+      if (timedOut) {
+         Serial.println("-----TIMED OUT ROOM 4!!!--------");
+         currentRoom = 0;
+         flashLed(led5, 250, 5);
+         break;
+      }
+
       // Choose random number of times to flash
       int flashCount = random(1,4);
       while (flashCount == lastLedCount) {
@@ -717,6 +744,13 @@ void doRoom4()
          //Serial.println("         in loop...motor2Pos=");
          //Serial.println(motor2Pos);
          delay(100); // Do not send commands too quickly
+         if (timedOut) {
+            Serial.println("-----TIMED OUT ROOM 4!!!--------");
+            currentRoom = 0;
+            flashLed(led5, 250, 5);
+            break;
+         }
+
       }
       lastLedCount = flashCount;
       Serial.println("GOT A CORRECT ANSWER IN ROOM 4------------------------------------------");

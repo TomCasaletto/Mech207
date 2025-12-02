@@ -5,8 +5,10 @@
 #include "Display_Controller_New.h"
 #include "Wire.h"
 
-int timeRemainingStart = 30;
-int timeRemaining = 30;
+void(* resetFunc) (void) = 0; // reset
+
+int timeRemainingStart = 10;
+int timeRemaining = 10;
 bool winner = false;
 bool inRoom0 = true;
 
@@ -24,7 +26,11 @@ void setup() {
 void loop() {
    if (winner || timeRemaining == 0) {
       writeNum(timeRemaining, 3000);
-      return;
+      Serial.println("resetting in 5 sec");
+      delay(5000);
+      resetFunc();
+      
+      //return;
    }
    if (inRoom0) {
       // do nothing
