@@ -7,8 +7,8 @@
 
 void(* resetFunc) (void) = 0; // reset
 
-int timeRemainingStart = 10;
-int timeRemaining = 10;
+int timeRemainingStart = 30;
+int timeRemaining = 30;
 bool winner = false;
 bool inRoom0 = true;
 
