@@ -7,8 +7,8 @@
 
 void(* resetFunc) (void) = 0; // reset
 
-int timeRemainingStart = 30;
-int timeRemaining = 30;
+int timeRemainingStart = 60;
+int timeRemaining = 60;
 bool winner = false;
 bool inRoom0 = true;
 
@@ -45,7 +45,7 @@ void loop() {
    }
    writeNum(timeRemaining, 3000);
 
-   delay(750);
+   delay(250);
    Serial.println(timeRemaining);
    Wire.beginTransmission(9);
    Wire.write(timeRemaining);

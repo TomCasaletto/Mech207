@@ -166,13 +166,17 @@ void loop() {
          setLowAll(5);
          delay(100);
       }
+      Serial1.println(10); // Tell Motor Controller to go to Starting position (Zero pos)
+      Serial.println("resetting in 5 sec");
+      delay(5000);
+      resetFunc(); // reset
 
-      int finalCounter=1;
-      while(1) {
-         Serial.println("looping final until reset...");
-         Serial.println(finalCounter++);
-         delay(1000);
-      }
+      //int finalCounter=1;
+      //while(1) {
+      //   Serial.println("looping final until reset...");
+      //   Serial.println(finalCounter++);
+      //   delay(1000);
+      //}
    }
    delay(1000);
 }
@@ -684,7 +688,7 @@ void doRoom3()
 
       // Create next stair to go to
       while (currentLedRoom3 == lastLedRoom3) {
-         currentLedRoom3 = random(1,5);
+         currentLedRoom3 = random(1,6);
       }
       lastLedRoom3 = currentLedRoom3;
    }
@@ -702,6 +706,7 @@ void doRoom3()
 void doRoom4()
 {
    Serial.println("In Room 4");
+   Serial1.println(16); // Tell Motor Controller to move player to Room 2, Stair 1
    Serial1.println(4); // Tell Motor Controller to enter Left/Right joystick control
 
    setLowAll(4);
@@ -725,9 +730,9 @@ void doRoom4()
       }
 
       // Choose random number of times to flash
-      int flashCount = random(1,4);
+      int flashCount = random(1,7);
       while (flashCount == lastLedCount) {
-         flashCount = random(1,4);
+         flashCount = random(1,7);
       }
       Serial.println("flashCount");
       Serial.println(flashCount);
